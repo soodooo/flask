@@ -2,7 +2,7 @@
 """
     flask.app
     ~~~~~~~~~
-
+    这个模块实现了中心的WSGI应用程序对象。
     This module implements the central WSGI application object.
 
     :copyright: © 2010 by the Pallets team.
@@ -11,9 +11,12 @@
 
 import os
 import sys
+# 发出警告的模块
 import warnings
 from datetime import timedelta
+# 用一个函数去装饰另一个
 from functools import update_wrapper
+# 迭代器中的链表
 from itertools import chain
 from threading import Lock
 
@@ -26,6 +29,7 @@ from . import cli, json
 from ._compat import integer_types, reraise, string_types, text_type
 from .config import Config, ConfigAttribute
 from .ctx import AppContext, RequestContext, _AppCtxGlobals
+# _request_ctx_stack 保存请求上下文的栈
 from .globals import _request_ctx_stack, g, request, session
 from .helpers import (
     _PackageBoundObject,
@@ -64,6 +68,7 @@ def setupmethod(f):
                 'database models and everything related at a central place '
                 'before the application starts serving requests.')
         return f(self, *args, **kwargs)
+    # 将一些函数信息从被装饰函数 f 复制到装饰器函数, 等同于 @functools.wapper?
     return update_wrapper(wrapper_func, f)
 
 
@@ -72,7 +77,7 @@ class Flask(_PackageBoundObject):
     object.  It is passed the name of the module or package of the
     application.  Once it is created it will act as a central registry for
     the view functions, the URL rules, template configuration and much more.
-
+    控制中心
     The name of the package is used to resolve resources from inside the
     package or the folder the module is contained in depending on if the
     package parameter resolves to an actual python package (a folder with
@@ -97,6 +102,10 @@ class Flask(_PackageBoundObject):
         module, `__name__` is always the correct value.  If you however are
         using a package, it's usually recommended to hardcode the name of
         your package there.
+
+        ######################
+        # 实验过程, 单个文件就是一个工程. 但是实际工程中要用app的名称
+        ######################
 
         For example if your application is defined in :file:`yourapplication/app.py`
         you should create it with one of the two versions below::
@@ -133,13 +142,18 @@ class Flask(_PackageBoundObject):
        matching needs to be enabled manually now. Setting
        :data:`SERVER_NAME` does not implicitly enable it.
 
+    # 工程最外层包的名称, 不要用 __name__ 了
     :param import_name: the name of the application package
+
+    # 用于设置 静态文件的 url 
     :param static_url_path: can be used to specify a different path for the
                             static files on the web.  Defaults to the name
                             of the `static_folder` folder.
     :param static_folder: the folder with static files that should be served
                           at `static_url_path`.  Defaults to the ``'static'``
                           folder in the root path of the application.
+
+    # 这里应该是 nginx 静态文件相关的工作的重合了
     :param static_host: the host to use when adding the static route.
         Defaults to None. Required when using ``host_matching=True``
         with a ``static_folder`` configured.
@@ -180,19 +194,25 @@ class Flask(_PackageBoundObject):
     jinja_environment = Environment
 
     #: The class that is used for the :data:`~flask.g` instance.
-    #:
+    #: 
     #: Example use cases for a custom class:
     #:
     #: 1. Store arbitrary attributes on flask.g.
+    # 在flask.g 对象上存储任意属性
     #: 2. Add a property for lazy per-request database connectors.
+    # 添加用于延迟每个请求的数据库连接器的属性。
     #: 3. Return None instead of AttributeError on unexpected attributes.
+    # 访问不存在的属性的时候, 返回None
     #: 4. Raise exception if an unexpected attr is set, a "controlled" flask.g.
-    #:
+    #: 设置错误属性的时候抛出异常.
     #: In Flask 0.9 this property was called `request_globals_class` but it
     #: was changed in 0.10 to :attr:`app_ctx_globals_class` because the
     #: flask.g object is now application context scoped.
+    # 应用上下文
     #:
     #: .. versionadded:: 0.10
+    # flask 中的 g 对象, 是一个应用上下文
+    # 生命周期是整个应用启动和开始?
     app_ctx_globals_class = _AppCtxGlobals
 
     #: The class that is used for the ``config`` attribute of this app.
@@ -216,6 +236,7 @@ class Flask(_PackageBoundObject):
     #:
     #: This attribute can also be configured from the config with the
     #: ``TESTING`` configuration key.  Defaults to ``False``.
+    #: 测试?
     testing = ConfigAttribute('TESTING')
 
     #: If a secret key is set, cryptographic components can use this to
@@ -239,6 +260,7 @@ class Flask(_PackageBoundObject):
     #: This attribute can also be configured from the config with the
     #: ``PERMANENT_SESSION_LIFETIME`` configuration key.  Defaults to
     #: ``timedelta(days=31)``
+    # session 过期时间
     permanent_session_lifetime = ConfigAttribute('PERMANENT_SESSION_LIFETIME',
         get_converter=_make_timedelta)
 
@@ -265,11 +287,13 @@ class Flask(_PackageBoundObject):
     #: The JSON encoder class to use.  Defaults to :class:`~flask.json.JSONEncoder`.
     #:
     #: .. versionadded:: 0.10
+    # json 编码类
     json_encoder = json.JSONEncoder
 
     #: The JSON decoder class to use.  Defaults to :class:`~flask.json.JSONDecoder`.
     #:
     #: .. versionadded:: 0.10
+    # json 解码类
     json_decoder = json.JSONDecoder
 
     #: Options that are passed directly to the Jinja2 environment.
@@ -352,7 +376,7 @@ class Flask(_PackageBoundObject):
 
     def __init__(
         self,
-        import_name,
+        import_name,    # 经常使用的__name__, 在单文件的时候起作用
         static_url_path=None,
         static_folder='static',
         static_host=None,

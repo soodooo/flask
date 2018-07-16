@@ -29,6 +29,7 @@ class _AppCtxGlobals(object):
 
     Creating an app context automatically creates this object, which is
     made available as the :data:`g` proxy.
+    创建 app 上下文的时候自动创建这个对象
 
     .. describe:: 'key' in g
 
@@ -98,6 +99,9 @@ def after_this_request(f):
     response objects.  The function is passed the response object and has
     to return the same or a new one.
 
+    # 用于统一给当前request 请求返回的response 添加一些东西
+    # 单个request上下文
+
     Example::
 
         @app.route('/')
@@ -114,12 +118,14 @@ def after_this_request(f):
 
     .. versionadded:: 0.9
     """
+    # _request_ctx_stack.top 当前请求的对象
     _request_ctx_stack.top._after_request_functions.append(f)
     return f
 
 
 def copy_current_request_context(f):
-    """A helper function that decorates a function to retain the current
+    """复制当前请求的上下文, 被装饰的函数被调用的时候, 上下文被保存
+    A helper function that decorates a function to retain(保持) the current
     request context.  This is useful when working with greenlets.  The moment
     the function is decorated a copy of the request context is created and
     then pushed when the function is called.
@@ -148,8 +154,10 @@ def copy_current_request_context(f):
             'view functions.')
     reqctx = top.copy()
     def wrapper(*args, **kwargs):
+        # 这里就不消耗 _request_ctx_stack中的对象了?
         with reqctx:
             return f(*args, **kwargs)
+    # 等同于 functools.wrap 装饰器, 将f 的属性复制给 wrapper
     return update_wrapper(wrapper, f)
 
 
@@ -247,23 +255,34 @@ class AppContext(object):
 
 
 class RequestContext(object):
-    """The request context contains all request relevant information.  It is
+    """RequestContext对象, 请求上下文对象, 
+    在request 请求开始创建, 并且保存在_request_ctx_stack对象中, 并且在请求结束后被删除.
+
+    The request context contains all request relevant information.  It is
     created at the beginning of the request and pushed to the
     `_request_ctx_stack` and removed at the end of it.  It will create the
-    URL adapter and request object for the WSGI environment provided.
+    URL adapter(适配器, 匹配器) and request object for the WSGI environment provided.
 
+    # 
     Do not attempt to use this class directly, instead use
     :meth:`~flask.Flask.test_request_context` and
     :meth:`~flask.Flask.request_context` to create this object.
 
+    # 请求上下文弹出后, 
     When the request context is popped, it will evaluate all the
     functions registered on the application for teardown execution
     (:meth:`~flask.Flask.teardown_request`).
 
+    # 请求上下文 在请求结束末尾自动弹出
+    # debug=True 的时候, 出现异常的时候, 调试器可以内省 请求上下文
+
     The request context is automatically popped at the end of the request
     for you.  In debug mode the request context is kept around if
-    exceptions happen so that interactive debuggers have a chance to
-    introspect the data.  With 0.4 this can also be forced for requests
+    exceptions happen so that interactive(交互式的；相互作用的) debuggers(调试程序) have a chance to
+    introspect(内省 内省, 查看) the data.  
+    
+    # 0.4版本以后, 可以设置在 DEBUG 模式之外禁止失败, 强制成功?
+    With 0.4 this can also be forced for requests
     that did not fail and outside of ``DEBUG`` mode.  By setting
     ``'flask._preserve_context'`` to ``True`` on the WSGI environment the
     context will not pop itself at the end of the request.  This is used by
