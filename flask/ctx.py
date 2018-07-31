@@ -282,11 +282,20 @@ class RequestContext(object):
     introspect(内省 内省, 查看) the data.  
     
     # 0.4版本以后, 可以设置在 DEBUG 模式之外禁止失败, 强制成功?
+
     With 0.4 this can also be forced for requests
     that did not fail and outside of ``DEBUG`` mode.  By setting
+
+    # preserve: 保存；保护；维持；腌；禁猎
+    # 可以设置 flask._preserve_context = True 来实现禁止在请求上下文结束后自动从栈中弹出
+    # 转而用其他方式清理任务.
+
     ``'flask._preserve_context'`` to ``True`` on the WSGI environment the
     context will not pop itself at the end of the request.  This is used by
     the :meth:`~flask.Flask.test_client` for example to implement the
+
+    # implament : vt. 实施，执行；实现，使  n. 工具，器具；手段
+
     deferred cleanup functionality.
 
     You might find this helpful for unittests where you need the
@@ -304,14 +313,15 @@ class RequestContext(object):
         self.flashes = None
         self.session = None
 
-        # Request contexts can be pushed multiple times and interleaved with
+        # Request contexts can be pushed multiple(多重的, 多样的, 许多的) times and interleaved(interleave 交错，交叉存取) with
         # other request contexts.  Now only if the last level is popped we
-        # get rid of them.  Additionally if an application context is missing
-        # one is created implicitly so for each level we add this information
+        # get rid(使摆脱；使去掉) of them.  Additionally(另一方面) if an application context is missing
+        # one is created implicitly(含蓄地；暗中地) so for each level we add this information
         self._implicit_app_ctx_stack = []
 
         # indicator if the context was preserved.  Next time another context
         # is pushed the preserved context is popped.
+        # 指示上下文是否被保留。下一次推送另一个上下文时，将弹出保存的上下文。
         self.preserved = False
 
         # remembers the exception for pop if there is one in case the context

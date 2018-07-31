@@ -212,7 +212,7 @@ class Flask(_PackageBoundObject):
     #:
     #: .. versionadded:: 0.10
     # flask 中的 g 对象, 是一个应用上下文
-    # 生命周期是整个应用启动和开始?
+    # 生命周期也是一个request, 但是可以获取全局的变量, 只要这个变量在任意位置注册到了g对象上
     app_ctx_globals_class = _AppCtxGlobals
 
     #: The class that is used for the ``config`` attribute of this app.
